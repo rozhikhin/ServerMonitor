@@ -1,7 +1,8 @@
 from tkinter import *
 from tkinter import ttk
 from tkinter import simpledialog
-# from dialog_edit import Dialog
+from dialog import Dialog
+from tkinter import messagebox
 
 
 class Table(object):
@@ -9,6 +10,7 @@ class Table(object):
     def __init__(self):
         # super(Table, self).__init__()
         self.tree = None
+        self.dialog = None
         self.servers = [
             ("DC", "OK" ),
             ("DC2", "OK" ),
@@ -30,6 +32,8 @@ class Table(object):
             ("83.222.197.218", "OK"),
             ("83.222.197.221", "OK")
         ]
+
+        self.servers.sort()
 
 
         self.setup_ui()
@@ -121,42 +125,46 @@ class Table(object):
             self.create_toplevel(server, state)
         else:
             print("Выберите сервер")
-
+            messagebox.showinfo("Выберите сервер", "Вы не выбрали сервер")
 
     def remove_server(self):
         self.tree.delete(self.tree.selection())
+        # self.tree.delete(*self.tree.get_children())
 
-    def create_toplevel(self, server, state):
 
-        self.toplevel_dialog = Toplevel(root)
-        self.toplevel_dialog.minsize(300, 100)
-        self.toplevel_dialog.protocol("WM_DELETE_WINDOW", self.close_toplevel)
+    def create_toplevel(self, server='', state=''):
 
-        container_server = ttk.Frame(self.toplevel_dialog)
-        container_server.pack(fill='x', side=TOP, pady=10, padx=(10, 10))
-        self.toplevel_dialog_label = ttk.Label(container_server, text='Сервер')
-        self.toplevel_dialog_label.pack(side=LEFT)
-        self.toplevel_entry_server = Entry(container_server, width=30)
-        self.toplevel_entry_server.insert(0, server)
-        self.toplevel_entry_server.pack(side=RIGHT)
+        self.dialog = Dialog(server, state)
 
-        container_state = ttk.Frame(self.toplevel_dialog)
-        container_state.pack(fill='x', side=TOP, pady=10, padx=(10, 10))
-        self.toplevel_dialog_label = ttk.Label(container_state, text='Состояние')
-        self.toplevel_dialog_label.pack(side=LEFT)
-        self.toplevel_entry_state = Entry(container_state, width=30)
-        self.toplevel_entry_state.insert(0,state)
-        self.toplevel_entry_state.pack(side=RIGHT)
+        # self.toplevel_dialog = Toplevel(root)
+        # self.toplevel_dialog.minsize(300, 100)
+        # self.toplevel_dialog.protocol("WM_DELETE_WINDOW", self.close_toplevel)
+        #
+        # container_server = ttk.Frame(self.toplevel_dialog)
+        # container_server.pack(fill='x', side=TOP, pady=10, padx=(10, 10))
+        # self.toplevel_dialog_label = ttk.Label(container_server, text='Сервер')
+        # self.toplevel_dialog_label.pack(side=LEFT)
+        # self.toplevel_entry_server = Entry(container_server, width=30)
+        # self.toplevel_entry_server.insert(0, server)
+        # self.toplevel_entry_server.pack(side=RIGHT)
+        #
+        # container_state = ttk.Frame(self.toplevel_dialog)
+        # container_state.pack(fill='x', side=TOP, pady=10, padx=(10, 10))
+        # self.toplevel_dialog_label = ttk.Label(container_state, text='Состояние')
+        # self.toplevel_dialog_label.pack(side=LEFT)
+        # self.toplevel_entry_state = Entry(container_state, width=30)
+        # self.toplevel_entry_state.insert(0,state)
+        # self.toplevel_entry_state.pack(side=RIGHT)
+        #
+        # container_buttons = ttk.Frame(self.toplevel_dialog)
+        # container_buttons.pack(fill='x', side=TOP, pady=10, padx=(10, 10))
+        # self.toplevel_dialog_yes_button = ttk.Button(container_buttons, text='Сохранить')
+        # self.toplevel_dialog_yes_button.pack(side=LEFT, fill='x', expand=True)
+        # self.toplevel_dialog_no_button = ttk.Button(container_buttons, text='Отмена', command=self.close_toplevel)
+        # self.toplevel_dialog_no_button.pack(side=LEFT, fill='x', expand=True)
 
-        container_buttons = ttk.Frame(self.toplevel_dialog)
-        container_buttons.pack(fill='x', side=TOP, pady=10, padx=(10, 10))
-        self.toplevel_dialog_yes_button = ttk.Button(container_buttons, text='Сохранить')
-        self.toplevel_dialog_yes_button.pack(side=LEFT, fill='x', expand=True)
-        self.toplevel_dialog_no_button = ttk.Button(container_buttons, text='Отмена', command=self.close_toplevel)
-        self.toplevel_dialog_no_button.pack(side=LEFT, fill='x', expand=True)
-
-    def close_toplevel(self):
-        self.toplevel_dialog.destroy()
+    # def close_toplevel(self):
+    #     self.dialog.destroy()
 
 if __name__ == '__main__':
     root = Tk()
