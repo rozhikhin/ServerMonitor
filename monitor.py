@@ -1,43 +1,30 @@
 from tkinter import *
 from tkinter import ttk
-from tkinter import simpledialog
 from dialog import Dialog
 from tkinter import messagebox
+from sqlapi import DB
 
-
-class Table(object):
-
-    def __init__(self):
-        # super(Table, self).__init__()
+class Table(Frame, object):
+    def __init__(self, master):
+        Frame.__init__(self)
+        # Инициализация перменных
+        # Таблица со списком серверов
         self.tree = None
-        self.dialog = None
-        self.servers = [
-            ("DC", "OK" ),
-            ("DC2", "OK" ),
-            ("DC3", "OK" ),
-            ("DCStore", "OK" ),
-            ("DCStore1", "OK" ),
-            ("HVStore", "OK" ),
-            ("DBS", "OK" ),
-            ("SQLServ", "OK"),
-            ("SQLServ2", "OK"),
-            ("Appserv", "OK"),
-            ("WDS", "OK"),
-            ("TSS", "OK"),
-            ("TSS2", "OK"),
-            ("RDS2", "OK"),
-            ("mail.alpha-medica.ru", "OK"),
-            ("sec.it-ra.ru", "OK"),
-            ("VMMS", "OK"),
-            ("83.222.197.218", "OK"),
-            ("83.222.197.221", "OK")
-        ]
+        # Дочернее окно для редактирования и добавления записей
+        # self.dialog = None
+        # Данные, приходящие из дочернего окна
+        self.toplevel_data = None
+        # Редактируется ли запись (self.edit = True) или создается новая (self.edit = False)
+        self.edit = False
+        self.servers = list()
+        self.sqlapi = DB()
+        self.sqlapi.init_db()
 
         self.servers.sort()
 
-
         self.setup_ui()
         self.add_all_servers()
+        self.get_settings()
 
 
     def setup_ui(self):
@@ -46,7 +33,6 @@ class Table(object):
         # container.pack(fill='both', expand=True)
         container.pack(fill='x', side=TOP, pady=10, padx=5, expand=False)
 
-        # self.tree = ttk.Treeview(columns=("columns1","columns2" ), show="headings", selectmode="browse")
         self.tree = ttk.Treeview(container, columns=("columns1","columns2" ), show="headings")
         vsb = ttk.Scrollbar(container, orient="vertical", command=self.tree.yview)
         vsb.pack(side='right', fill='y')
@@ -70,22 +56,22 @@ class Table(object):
         container_interval.pack(fill='x', side=TOP, pady=5, padx=(10, 10))
         label_interval = Label(container_interval, text="Интервал")
         label_interval.pack( side=LEFT, padx=5)
-        entry_interval = Entry(container_interval, width=10)
-        entry_interval.pack( side=RIGHT, padx=(0, 200))
+        self.entry_interval = Entry(container_interval, width=10)
+        self.entry_interval.pack( side=RIGHT, padx=(0, 200))
 
         container_numcheck = ttk.Frame()
         container_numcheck.pack(fill='x', side=TOP, pady=5, padx=(10, 10))
         label_numcheck = Label(container_numcheck, text="Количество проверок")
         label_numcheck.pack( side=LEFT,padx=5)
-        entry_numcheck = Entry(container_numcheck, width=10)
-        entry_numcheck.pack( side=RIGHT, padx=(0, 200))
+        self.entry_numcheck = Entry(container_numcheck, width=10)
+        self.entry_numcheck.pack( side=RIGHT, padx=(0, 200))
 
         container_email = ttk.Frame()
         container_email.pack(fill='x', side=TOP, pady=5, padx=(10, 10))
         label_email = Label(container_email, text="E-Mail")
         label_email.pack( side=LEFT,padx=5)
-        entry_email = Entry(container_email, width=50)
-        entry_email.pack( side=RIGHT, padx=(0, 0))
+        self.entry_email = Entry(container_email, width=50)
+        self.entry_email.pack( side=RIGHT, padx=(0, 0))
 
 
 
@@ -93,81 +79,75 @@ class Table(object):
         container3.pack(fill='x', side=TOP, pady=10, padx=10)
         button_exit = Button(container3, text="Выйти", width=15, command=root.quit)
         button_exit.pack(side=RIGHT, padx=(0, padx_button))
-        button_save = Button(container3, text="Сохранить", width=15, command=self.add_server)
+        button_save = Button(container3, text="Сохранить", width=15, command=self.save_settings)
         button_save.pack(side=RIGHT, padx=(0, padx_button))
         button_del = Button(container3, text="Отмена", width=15)
         button_del.pack(side=RIGHT, padx=(0, padx_button))
 
-    def select(self, event):
-        print(self.tree.selection())
-
+    def select(self, event=None):
         for nm in self.tree.selection():
-            server, state = self.tree.item(nm, 'values')
-            print(server)
-            print(state)
+            server_name, state = self.tree.item(nm, 'values')
+        return {'server_name': server_name, 'state': state}
 
     def add_all_servers(self):
-        for values in self.servers:
-            self.tree.insert("", END, values=values)
+        self.servers = self.sqlapi.get_servers()
+        if self.servers is not None:
+            for values in self.servers:
+                self.tree.insert("", END, values=values)
 
     def add_server(self):
-        server_name = simpledialog.askstring("Добавить сервер", "Имя сервера")
+        self.edit = False
+        self.create_toplevel()
 
-        if server_name is not None:
-            self.tree.insert("", END, values=(server_name, "OK"))
-        # print(server_name)
+    def save_server(self, data):
+        if self.edit:
+            self.tree.delete(self.tree.selection())
+        self.tree.insert("", END, values=(data["server_name"], data["state"]))
+        self.sqlapi.save_server(data)
+
+        servers = []
+        for item in self.tree.get_children():
+            server, state = self.tree.item(item, 'values')
+            servers.append((server, state))
+            servers.sort()
+        self.tree.delete(*self.tree.get_children())
+        for values in servers:
+            self.tree.insert("", END, values=values)
 
     def edit_server(self):
+        self.edit = True
         server, state = ('', '')
         for nm in self.tree.selection():
             server, state = self.tree.item(nm, 'values')
         if server:
             self.create_toplevel(server, state)
         else:
-            print("Выберите сервер")
-            messagebox.showinfo("Выберите сервер", "Вы не выбрали сервер")
+            messagebox.showinfo("Выберите сервер", "Необходимо выбрать сервер для редактирования")
 
     def remove_server(self):
-        self.tree.delete(self.tree.selection())
         # self.tree.delete(*self.tree.get_children())
+        select_server = self.select()
+        self.tree.delete(self.tree.selection())
+        self.sqlapi.delete_server(select_server)
 
+    def save_settings(self):
+        self.sqlapi.update_settings({"interval": self.entry_interval.get(),
+                                  "count_of_check": self.entry_numcheck.get(),
+                                   "email": self.entry_email.get()
+                                     })
+        self.quit()
+
+    def get_settings(self):
+        interval, count_of_check, email = self.sqlapi.get_settings()
+        self.entry_interval.insert(0, str(interval))
+        self.entry_numcheck.insert(0, str(count_of_check))
+        self.entry_email.insert(0, email)
 
     def create_toplevel(self, server='', state=''):
-
-        self.dialog = Dialog(server, state)
-
-        # self.toplevel_dialog = Toplevel(root)
-        # self.toplevel_dialog.minsize(300, 100)
-        # self.toplevel_dialog.protocol("WM_DELETE_WINDOW", self.close_toplevel)
-        #
-        # container_server = ttk.Frame(self.toplevel_dialog)
-        # container_server.pack(fill='x', side=TOP, pady=10, padx=(10, 10))
-        # self.toplevel_dialog_label = ttk.Label(container_server, text='Сервер')
-        # self.toplevel_dialog_label.pack(side=LEFT)
-        # self.toplevel_entry_server = Entry(container_server, width=30)
-        # self.toplevel_entry_server.insert(0, server)
-        # self.toplevel_entry_server.pack(side=RIGHT)
-        #
-        # container_state = ttk.Frame(self.toplevel_dialog)
-        # container_state.pack(fill='x', side=TOP, pady=10, padx=(10, 10))
-        # self.toplevel_dialog_label = ttk.Label(container_state, text='Состояние')
-        # self.toplevel_dialog_label.pack(side=LEFT)
-        # self.toplevel_entry_state = Entry(container_state, width=30)
-        # self.toplevel_entry_state.insert(0,state)
-        # self.toplevel_entry_state.pack(side=RIGHT)
-        #
-        # container_buttons = ttk.Frame(self.toplevel_dialog)
-        # container_buttons.pack(fill='x', side=TOP, pady=10, padx=(10, 10))
-        # self.toplevel_dialog_yes_button = ttk.Button(container_buttons, text='Сохранить')
-        # self.toplevel_dialog_yes_button.pack(side=LEFT, fill='x', expand=True)
-        # self.toplevel_dialog_no_button = ttk.Button(container_buttons, text='Отмена', command=self.close_toplevel)
-        # self.toplevel_dialog_no_button.pack(side=LEFT, fill='x', expand=True)
-
-    # def close_toplevel(self):
-    #     self.dialog.destroy()
+        Dialog(self, server, state, self.edit)
 
 if __name__ == '__main__':
     root = Tk()
     root.resizable(width=FALSE, height=FALSE)
-    table = Table()
+    table = Table(root)
     root.mainloop()
