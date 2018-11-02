@@ -3,6 +3,7 @@ from tkinter import ttk
 from dialog import Dialog
 from tkinter import messagebox
 from sqlapi import DB
+from service_dialog import DialogService
 import re
 
 class Table(Frame, object):
@@ -40,13 +41,15 @@ class Table(Frame, object):
         container = ttk.Frame()
         container.pack(fill='x', side=TOP, pady=10, padx=5, expand=False)
         # Создание Treeview, содержащего список серверов
-        self.tree = ttk.Treeview(container, columns=("columns1","columns2" ), show="headings")
+        self.tree = ttk.Treeview(container, columns=("columns1","columns2"), show="headings")
+        # self.tree = ttk.Treeview(container, columns=("columns1","columns2","columns3"))
         vsb = ttk.Scrollbar(container, orient="vertical", command=self.tree.yview)
         vsb.pack(side='right', fill='y')
         self.tree.configure(yscrollcommand=vsb.set)
         # Заголовки колонок
         self.tree.heading("#1", text="Сервер")
         self.tree.heading("#2", text="Состояние")
+        # self.tree.heading("#3", text="Ошибки")
         # Подключение обработчика при выделении элемента
         self.tree.bind("<<TreeviewSelect>>", self.select)
         self.tree.pack()
@@ -113,7 +116,7 @@ class Table(Frame, object):
         self.button_save = Button(container3, text="Сохранить", width=15, command=self.save_settings)
         self.button_save.pack(side=RIGHT, padx=(0, padx_button))
         # Кнопка запуска проверки
-        button_check = Button(container3, text="Запустить", width=15)
+        button_check = Button(container3, text="Служба", width=15, command=self.open_service_settings)
         button_check.pack(side=RIGHT, padx=(0, padx_button))
 
     def select(self, event=None):
@@ -123,7 +126,7 @@ class Table(Frame, object):
         :return: dict
         """
         for nm in self.tree.selection():
-            server_name, state = self.tree.item(nm, 'values')
+            server_name, state, err = self.tree.item(nm, 'values')
         return {'server_name': server_name, 'state': state}
 
     def add_all_servers(self):
@@ -197,7 +200,7 @@ class Table(Frame, object):
         servers.append((server_data["server_name"], server_data["state"]))
         # Получаем и перебираем все элементы в списке серверов.
         for item in self.tree.get_children():
-            server, state = self.tree.item(item, 'values')
+            server, state, err = self.tree.item(item, 'values')
             # Проверяем, что новое имя сервера уникально - для новой записи
             if (not self.edit) and (server_data["server_name"] == server):
                 return
@@ -301,12 +304,23 @@ class Table(Frame, object):
         return True
 
     def check_email(self, email):
-        # Функция check_email проверяет корректность введенного e-mail
+        """
+        Функция check_email проверяет корректность введенного e-mail
+        :param email: str
+        :return: Bool
+        """
         exp = r"(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)"
         res = re.search(exp, email)
         if res:
             return True
         return False
+
+    def open_service_settings(self):
+        """
+        Функция open_service_settings открывает окно с настройками службы Windows
+        :return: None
+        """
+        DialogService()
 
 
 if __name__ == '__main__':

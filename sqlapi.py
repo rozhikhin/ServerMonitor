@@ -68,7 +68,8 @@ class DB():
             CREATE TABLE IF NOT EXISTS servers (
                 server_id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name  TEXT NOT NULL,
-                state TEXT NOT NULL
+                state TEXT NOT NULL default "OK",
+                error_count INTEGER default 0
             );
             CREATE UNIQUE INDEX IF NOT EXISTS idx_servers_name ON servers (name);
             """
@@ -148,15 +149,46 @@ class DB():
         con = self.create_connection()
         cursor = con.cursor()
         try:
-            sql_srver_list= "SELECT name, state FROM servers"
+            sql_srver_list= "SELECT name, state, error_count FROM servers"
             cursor.execute(sql_srver_list)
             return cursor.fetchall()
         except sqlite3.DatabaseError as error:
             return self.show_db_error(error)
 
+
+    def update_error_count(self, data):
+        """
+        Функция update_error_count(error_count) обновляет счетчик ошибок в БД
+        :param data:
+        :return: None
+        """
+        connection = self.create_connection()
+        cursor = connection.cursor()
+        try:
+            sql_str = """UPDATE servers SET error_count=:error_count WHERE name=:name"""
+            cursor.execute(sql_str, data)
+            connection.commit()
+        except sqlite3.DatabaseError as error:
+            self.show_db_error(error)
+
+    def update_state(self, data):
+        """
+        Функция update_state() устанавливает ( state == ERROR ) или снимает ( state == OK ) состояние сервера в БД
+        :param data:
+        :return: None
+        """
+        connection = self.create_connection()
+        cursor = connection.cursor()
+        try:
+            sql_str = """UPDATE servers SET state=:state WHERE name=:name"""
+            cursor.execute(sql_str, data)
+            connection.commit()
+        except sqlite3.DatabaseError as error:
+            self.show_db_error(error)
+
     def update_settings(self, changed_settings):
         """
-        Функция save_settings(changed_settings) обновляет данные в БД
+        Функция update_settings(changed_settings) обновляет данные в БД
         :param changed_settings:
         :return: None
         """
