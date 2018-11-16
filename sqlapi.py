@@ -20,7 +20,7 @@ class DB():
             "id_setting": 1,
             "interval": 60,
             "count_of_check": 10,
-            "email": ""
+            "email_from": ""
         }
 
     def init_db(self):
@@ -62,7 +62,12 @@ class DB():
                 id_setting INTEGER PRIMARY KEY AUTOINCREMENT,
                 interval INTEGER default 60,
                 count_of_check INTEGER default 10,
-                email  TEXT default ""
+                email_from  TEXT default "",
+                email_to  TEXT default "",
+                password_hash TEXT default "",
+                smtp_server TEXT default "",
+                smtp_port INTEGER default 25,
+                start_tls INTEGER default 0
                 );
 
             CREATE TABLE IF NOT EXISTS servers (
@@ -102,8 +107,8 @@ class DB():
         connection = self.create_connection()
         cursor = connection.cursor()
         try:
-            sql_settings = """INSERT INTO setting (id_setting, interval, count_of_check, email) 
-                        VALUES (:id_setting, :interval, :count_of_check, :email)"""
+            sql_settings = """INSERT INTO setting (id_setting, interval, count_of_check, email_from) 
+                        VALUES (:id_setting, :interval, :count_of_check, :email_from)"""
             cursor.execute(sql_settings, self.settings)
             connection.commit()
         except sqlite3.DatabaseError as error:
@@ -134,7 +139,7 @@ class DB():
         try:
             con = self.create_connection()
             cursor = con.cursor()
-            sql_settings = "SELECT interval, count_of_check, email FROM setting"
+            sql_settings = "SELECT interval, count_of_check, email_from FROM setting"
             cursor.execute(sql_settings)
             return cursor.fetchone()
         except sqlite3.DatabaseError as error:
@@ -154,6 +159,22 @@ class DB():
             return cursor.fetchall()
         except sqlite3.DatabaseError as error:
             return self.show_db_error(error)
+
+    # Получить список серверов из базы данных
+    def get_servers_name_and_state(self):
+        """
+        Функция get_servers() делает выборку севреров из таблицы servers
+        :return:  List - выборка из бд
+        """
+        con = self.create_connection()
+        cursor = con.cursor()
+        try:
+            sql_srver_list= "SELECT name, state FROM servers"
+            cursor.execute(sql_srver_list)
+            return cursor.fetchall()
+        except sqlite3.DatabaseError as error:
+            return self.show_db_error(error)
+
 
 
     def update_error_count(self, data):
@@ -195,8 +216,10 @@ class DB():
         connection = self.create_connection()
         cursor = connection.cursor()
         try:
-            sql_settings = """UPDATE setting SET interval=:interval, count_of_check=:count_of_check, 
-                  email=:email WHERE id_setting=1"""
+            sql_settings = """UPDATE setting SET interval=:interval, count_of_check=:count_of_check,             
+                    email_from=:email_from, email_to=:email_to, password_hash=:password, smtp_server=:smtp_server,
+                    smtp_port=:smtp_port, start_tls=:tls
+                    WHERE id_setting=1"""
             cursor.execute(sql_settings, changed_settings)
             connection.commit()
         except sqlite3.DatabaseError as error:

@@ -1,4 +1,5 @@
 from tkinter import *
+import tkinter as tk
 from tkinter import ttk
 
 class Dialog(Frame, object):
@@ -11,6 +12,13 @@ class Dialog(Frame, object):
         :param title: str
         """
         Frame.__init__(self, master)
+
+        # Список и словарь для выпадающего списка. Сисок для заполнения занчениями выпадающий список.
+        # Словарь - числовые соответсвия значениям списка
+        # define keys and mappings
+        self.ITEMS = ["OK", "ERROR"]
+        self.MAPPING = {"ERROR" : 1, "OK" : 0}
+
         # Создание экземпляра класса Toplevel
         self.master = master
         self.toplevel_dialog = Toplevel()
@@ -38,9 +46,11 @@ class Dialog(Frame, object):
         container_state.pack(fill='x', side=TOP, pady=10, padx=(10, 10))
         self.toplevel_dialog_label = ttk.Label(container_state, text='Состояние')
         self.toplevel_dialog_label.pack(side=LEFT)
-        self.toplevel_combobox_state = ttk.Combobox(container_state, width=30, values=("OK", "ERROR"), state='readonly')
+        # self.toplevel_combobox_state = ttk.Combobox(container_state, width=30, values=("OK", "ERROR"), state='readonly')
+        self.toplevel_combobox_state = ttk.Combobox(container_state, width=30, values=self.ITEMS, state='readonly')
         self.toplevel_combobox_state.current(0)
         self.toplevel_combobox_state.pack(side=RIGHT)
+        # self.toplevel_combobox_state.bind('<<ComboboxSelected>>', self.onSelect)
 
         # Контейнер для кнопок
         container_buttons = ttk.Frame(self.toplevel_dialog)
@@ -49,6 +59,9 @@ class Dialog(Frame, object):
         self.toplevel_dialog_yes_button.pack(side=LEFT, fill='x', expand=True)
         self.toplevel_dialog_no_button = ttk.Button(container_buttons, text='Отмена', command=self.close_toplevel)
         self.toplevel_dialog_no_button.pack(side=LEFT, fill='x', expand=True)
+
+    # def onSelect(self, event):
+    #     print(self.MAPPING[self.toplevel_combobox_state.get()])
 
     def get_text(self):
         """
@@ -61,7 +74,10 @@ class Dialog(Frame, object):
         if not server_name:
             self.toplevel_entry_server.config({"background": "Red"})
             return
-        state = self.toplevel_combobox_state.get()
+        # state = self.toplevel_combobox_state.get()
+        state = self.MAPPING[self.toplevel_combobox_state.get()]
+        # print(state)
+
         # Вызываем функцию главного модуля и сохраняем данные
         self.master.save_server({"server_name": server_name, "state": state})
         self.close_toplevel()
@@ -83,5 +99,7 @@ class Dialog(Frame, object):
         :return: None
         """
         self.toplevel_dialog.destroy()
+
+
 
 

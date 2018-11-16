@@ -1,6 +1,6 @@
 from tkinter import *
 from tkinter import ttk
-
+import subprocess
 
 class DialogService (Frame, object):
     # def __init__(self, master):
@@ -28,12 +28,12 @@ class DialogService (Frame, object):
         container_buttons.pack(fill='x', side=TOP, pady=10, padx=(10, 10))
         self.install_service_button = ttk.Button(container_buttons, text='Установить службу')
         self.install_service_button.pack(side=TOP, fill='x', expand=True)
-        self.start_service_button  = ttk.Button(container_buttons, text='Запустить службу')
-        self.start_service_button .pack(side=TOP, fill='x', expand=True)
+        self.start_service_button  = ttk.Button(container_buttons, text='Запустить службу', command=self.test_ping)
+        self.start_service_button.pack(side=TOP, fill='x', expand=True)
         self.stop_service_button  = ttk.Button(container_buttons, text='Остановить службу')
-        self.stop_service_button .pack(side=TOP, fill='x', expand=True)
+        self.stop_service_button.pack(side=TOP, fill='x', expand=True)
         self.delete_service_button  = ttk.Button(container_buttons, text='Удалить службу')
-        self.delete_service_button .pack(side=TOP, fill='x', expand=True)
+        self.delete_service_button.pack(side=TOP, fill='x', expand=True)
         self.close_button = ttk.Button(container_buttons, text='Закрыть', command=self.close_toplevel)
         self.close_button.pack(side=LEFT, fill='x', expand=True)
 
@@ -45,6 +45,11 @@ class DialogService (Frame, object):
         """
         self.toplevel_dialog.destroy()
 
+    def test_ping(self):
+        # th = Ping("ping")
+        # th.run()
+        # th.start()
+        subprocess.call("servers_check.exe")
 
 if __name__ == '__main__':
     root = Tk()

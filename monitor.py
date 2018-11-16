@@ -3,7 +3,8 @@ from tkinter import ttk
 from dialog import Dialog
 from tkinter import messagebox
 from sqlapi import DB
-from service_dialog import DialogService
+from threading import Thread
+from servers_check import Ping
 import re
 
 class Table(Frame, object):
@@ -97,20 +98,83 @@ class Table(Frame, object):
         self.entry_numcheck = Entry(container_numcheck, width=10, validate='focusin', validatecommand=self.set_default_style)
         self.entry_numcheck.pack( side=RIGHT, padx=(0, 200))
 
-        # Контейнер для надписи и поля ввода для e-mail для отправки сообщений
-        container_email = ttk.Frame()
-        container_email.pack(fill='x', side=TOP, pady=5, padx=(10, 10))
-        label_email = Label(container_email, text="E-Mail")
-        label_email.pack( side=LEFT,padx=5)
+        ##########################################################################
+
+        # Контейнер для группировки виджетов
+
+        group = LabelFrame(text="Настройка уведомлений", padx=5, pady=5)
+        group.pack(padx=10, pady=10)
+
+        # Контейнер для надписи и поля ввода для e-mail отправителя
+        container_email_from = ttk.Frame(group)
+        container_email_from.pack(fill='x', side=TOP, pady=5, padx=(10, 10))
+        label_email_from = Label(container_email_from, text="E-Mail отправителя")
+        label_email_from.pack( side=LEFT,padx=5)
         # Поле ввода с проверкой, аналогичной предыдущему полю
-        self.entry_email = Entry(container_email, width=50, validate='focusin', validatecommand=self.set_default_style)
-        self.entry_email.pack( side=RIGHT, padx=(0, 0))
+        self.entry_email_from = Entry(container_email_from, width=40, validate='focusin', validatecommand=self.set_default_style)
+        self.entry_email_from.pack( side=RIGHT, padx=(0, 0))
+
+        # Контейнер для надписи и поля ввода для e-mail получателя
+        container_email_to = ttk.Frame(group)
+        container_email_to.pack(fill='x', side=TOP, pady=5, padx=(10, 10))
+        label_email_from = Label(container_email_to, text="E-Mail получателя")
+        label_email_from.pack( side=LEFT,padx=5)
+        # Поле ввода с проверкой, аналогичной предыдущему полю
+        self.entry_email_to = Entry(container_email_to, width=40, validate='focusin', validatecommand=self.set_default_style)
+        self.entry_email_to.pack( side=RIGHT, padx=(0, 0))
+
+        # Контейнер для надписи и поля ввода пароля
+        container_password = ttk.Frame(group)
+        container_password.pack(fill='x', side=TOP, pady=5, padx=(10, 10))
+        label_password = Label(container_password, text="Пароль")
+        label_password.pack( side=LEFT,padx=5)
+        # Поле ввода с проверкой, аналогичной предыдущему полю
+        self.entry_password = Entry(container_password, width=40, validate='focusin', validatecommand=self.set_default_style,  show="*")
+        self.entry_password.pack( side=RIGHT, padx=(0, 0))
+
+        # Контейнер для надписи и поля ввода подтверждения пароля
+        container_confirm_password = ttk.Frame(group)
+        container_confirm_password.pack(fill='x', side=TOP, pady=5, padx=(10, 10))
+        label_confirm_password = Label(container_confirm_password, text="Подтверждение пароля")
+        label_confirm_password.pack( side=LEFT,padx=5)
+        # Поле ввода с проверкой, аналогичной предыдущему полю
+        self.entry_confirm_password = Entry(container_confirm_password, width=40, validate='focusin', validatecommand=self.set_default_style,  show="*")
+        self.entry_confirm_password.pack( side=RIGHT, padx=(0, 0))
+
+        # Контейнер для надписи и поля ввода SMTP сервера
+        container_smtp_server = ttk.Frame(group)
+        container_smtp_server.pack(fill='x', side=TOP, pady=5, padx=(10, 10))
+        label_smtp_server = Label(container_smtp_server, text="SMTP сервер")
+        label_smtp_server.pack( side=LEFT,padx=5)
+        # Поле ввода с проверкой, аналогичной предыдущему полю
+        self.entry_smtp_server = Entry(container_smtp_server, width=40, validate='focusin', validatecommand=self.set_default_style)
+        self.entry_smtp_server.pack( side=RIGHT, padx=(0, 0))
+
+        # Контейнер для надписи и поля ввода SMTP порта
+        container_smtp_port = ttk.Frame(group)
+        container_smtp_port.pack(fill='x', side=TOP, pady=5, padx=(10, 10))
+        label_smtp_port = Label(container_smtp_port, text="SMTP порт")
+        label_smtp_port.pack(side=LEFT,padx=5)
+        # Поле ввода с проверкой, аналогичной предыдущему полю
+        self.entry_smtp_port = Entry(container_smtp_port, width=10, validate='focusin', validatecommand=self.set_default_style)
+        self.entry_smtp_port.pack( side=RIGHT, padx=(0, 180))
+
+        # Контейнер для надписи и combobox для указания - использовать tls или нет
+        container_tls = ttk.Frame(group)
+        container_tls.pack(fill='x', side=TOP, pady=5, padx=(10, 10))
+        self.label_tls = Label(container_tls, text='TLS')
+        self.label_tls.pack(side=LEFT,padx=5)
+        self.combobox_tls = ttk.Combobox(container_tls, width=7, values=("Да", "Нет"), state='readonly')
+        self.combobox_tls.current(0)
+        self.combobox_tls.pack(side=RIGHT, padx=(0, 180))
+        # self.toplevel_combobox_state.bind('<<ComboboxSelected>>', self.onSelect)
+        #########################################################################
 
         # Контейнер для кнопок формы настроек
         container3 = ttk.Frame()
         container3.pack(fill='x', side=TOP, pady=10, padx=10)
         # Кнопка закрытия формы настроек
-        button_exit = Button(container3, text="Выйти", width=15, command=root.quit)
+        button_exit = Button(container3, text="Выйти", width=15, command=root.destroy)
         button_exit.pack(side=RIGHT, padx=(0, padx_button))
         # Кнопка сохранения настроек
         self.button_save = Button(container3, text="Сохранить", width=15, command=self.save_settings)
@@ -125,19 +189,37 @@ class Table(Frame, object):
         :param event: None
         :return: dict
         """
+        server_name = None
         for nm in self.tree.selection():
-            server_name, state, err = self.tree.item(nm, 'values')
+            server_name, state = self.tree.item(nm, 'values')
+        if not server_name:
+            messagebox.showinfo("Выберите сервер", "Необходимо выбрать сервер ")
+            return None
         return {'server_name': server_name, 'state': state}
+
+    def convert_state_from_int_to_str(self, values):
+        """
+        Функция convert_state_from_int_to_str заменяет числовые значения на буквенные для пончтного отображние в форме
+        :param values: tuple
+        :return: list
+        """
+        values = list(values)
+        if int(values[1]) == 0:
+            values[1] = 'OK'
+        else:
+            values[1] = 'Error'
+        return values
 
     def add_all_servers(self):
         """
         Функция add_all_servers получает из базы данных список с данными серверов, сортирует его и добавляет в Treeview
         :return: None
         """
-        servers = self.sqlapi.get_servers()
+        servers = self.sqlapi.get_servers_name_and_state()
         servers.sort()
         if servers is not None:
             for values in servers:
+                values = self.convert_state_from_int_to_str(values)
                 self.tree.insert("", END, values=values)
 
     def create_top_for_add_server(self):
@@ -155,13 +237,10 @@ class Table(Frame, object):
         """
         # Устанавливает флаг edit, означающий что диалоговое окно открывается для редактирования
         self.edit = True
-        server, state = ('', '')
-        for nm in self.tree.selection():
-            server, state = self.tree.item(nm, 'values')
-        if server:
-            dialog = Dialog(self, server, state, title="Редактировать запись")
-        else:
-            messagebox.showinfo("Выберите сервер", "Необходимо выбрать сервер для редактирования")
+        selected_data = self.select()
+        if selected_data:
+            server, state = selected_data["server_name"], selected_data["state"]
+            Dialog(self, server, state, title="Редактировать запись")
 
     def add_server(self, server_data):
         """
@@ -194,13 +273,19 @@ class Table(Frame, object):
         :param server_data: dict
         :return: None
         """
-        # Создаем пустой список
+
+        if  server_data["state"] == 0:
+            server_data["state"] = "OK"
+        else:
+            server_data["state"] = "ERROR"
+
         servers = list()
         # Добавляем в список новый сервер
         servers.append((server_data["server_name"], server_data["state"]))
+
         # Получаем и перебираем все элементы в списке серверов.
         for item in self.tree.get_children():
-            server, state, err = self.tree.item(item, 'values')
+            server, state = self.tree.item(item, 'values')
             # Проверяем, что новое имя сервера уникально - для новой записи
             if (not self.edit) and (server_data["server_name"] == server):
                 return
@@ -232,8 +317,10 @@ class Table(Frame, object):
         :return: None
         """
         select_server = self.select()
-        self.tree.delete(self.tree.selection())
-        self.sqlapi.delete_server(select_server)
+        if select_server:
+            self.tree.delete(self.tree.selection())
+            self.sqlapi.delete_server(select_server)
+
 
     def save_settings(self):
         """
@@ -248,8 +335,14 @@ class Table(Frame, object):
         entry_text_dict = {
                         "interval": self.entry_interval.get(),
                         "count_of_check": self.entry_numcheck.get(),
-                        "email": self.entry_email.get()
+                        "email_from": self.entry_email_from.get(),
+                        "email_to": self.entry_email_to.get(),
+                        "password": self.entry_password.get(),
+                        "smtp_server": self.entry_smtp_server.get(),
+                        "smtp_port": self.entry_smtp_port.get(),
+                        "tls": 1 if self.combobox_tls.get() == "Да" else 0
         }
+
         # Если поле пустое или не является числом
         if not entry_text_dict["interval"].isnumeric():
             # Сделать фон поля красным
@@ -262,12 +355,44 @@ class Table(Frame, object):
             self.entry_numcheck.config({"background": "Red"})
             # Флаг error установить в значение True
             error = True
-        # Если поле не является корректным e-mail адресом
-        if not self.check_email(entry_text_dict["email"]):
+        # Если поле пустое или не является числом
+        if not entry_text_dict["smtp_port"].isnumeric():
             # Сделать фон поля красным
-            self.entry_email.config({"background": "Red"})
+            self.entry_smtp_port.config({"background": "Red"})
             # Флаг error установить в значение True
             error = True
+        # Если поле пустое
+        if not entry_text_dict["password"]:
+            # Сделать фон поля красным
+            self.entry_password.config({"background": "Red"})
+            # Флаг error установить в значение True
+            error = True
+        # Если пароли не совпадают
+        if not entry_text_dict["password"] == self.entry_confirm_password.get():
+            self.entry_password.config({"background": "Red"})
+            self.entry_confirm_password.config({"background": "Red"})
+            msg += " \nПароль и подтверждение не совпадают"
+            # Флаг error установить в значение True
+            error = True
+        # Если поле пустое
+        if not entry_text_dict["smtp_server"]:
+            # Сделать фон поля красным
+            self.entry_smtp_server.config({"background": "Red"})
+            # Флаг error установить в значение True
+            error = True
+        # Если поле не является корректным e-mail адресом
+        if not self.check_email(entry_text_dict["email_from"]):
+            # Сделать фон поля красным
+            self.entry_email_from.config({"background": "Red"})
+            # Флаг error установить в значение True
+            error = True
+        # Если поле не является корректным e-mail адресом
+        if not self.check_email(entry_text_dict["email_to"]):
+            # Сделать фон поля красным
+            self.entry_email_to.config({"background": "Red"})
+            # Флаг error установить в значение True
+            error = True
+
         # Если флаг error установлен в True
         if error:
             # Установить фокус на кнопку "Сохранить"
@@ -285,10 +410,10 @@ class Table(Frame, object):
         Функция get_settings получает настройки из базы данные и отображает их в поях формы
         :return: None
         """
-        interval, count_of_check, email = self.sqlapi.get_settings()
+        interval, count_of_check, email_from = self.sqlapi.get_settings()
         self.entry_interval.insert(0, str(interval))
         self.entry_numcheck.insert(0, str(count_of_check))
-        self.entry_email.insert(0, email)
+        self.entry_email_from.insert(0, email_from)
 
     def set_default_style(self):
         """
@@ -297,20 +422,26 @@ class Table(Frame, object):
         """
         self.entry_interval.configure(bg="White")
         self.entry_numcheck.configure(bg="White")
-        self.entry_email.configure(bg="White")
+        self.entry_email_from.configure(bg="White")
+        self.entry_email_to.configure(bg="White")
+        self.entry_password.configure(bg="White")
+        self.entry_confirm_password.configure(bg="White")
+        self.entry_smtp_server.configure(bg="White")
+        self.entry_smtp_port.configure(bg="White")
+
         # Метод проверки должен вернуть True, чтобы разрешить изменение (т.е. проверка будет выпоняться каждый раз при наступлении события,
         # False, чтобы отклонить его ( т.е. проверка не будет выполняться)
         # или None, чтобы отключить себя (проверка будет выпонена 1 раз и потом будет оключена).
         return True
 
-    def check_email(self, email):
+    def check_email(self, email_from):
         """
         Функция check_email проверяет корректность введенного e-mail
         :param email: str
         :return: Bool
         """
         exp = r"(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)"
-        res = re.search(exp, email)
+        res = re.search(exp, email_from)
         if res:
             return True
         return False
@@ -320,8 +451,11 @@ class Table(Frame, object):
         Функция open_service_settings открывает окно с настройками службы Windows
         :return: None
         """
-        DialogService()
-
+        # DialogService()
+        th = Ping("ping")
+        th1 = Thread(target=th.run)
+        th1.start()
+        # subprocess.call("servers_check.exe")
 
 if __name__ == '__main__':
     root = Tk()
