@@ -46,7 +46,6 @@ class Dialog(Frame, object):
         container_state.pack(fill='x', side=TOP, pady=10, padx=(10, 10))
         self.toplevel_dialog_label = ttk.Label(container_state, text='Состояние')
         self.toplevel_dialog_label.pack(side=LEFT)
-        # self.toplevel_combobox_state = ttk.Combobox(container_state, width=30, values=("OK", "ERROR"), state='readonly')
         self.toplevel_combobox_state = ttk.Combobox(container_state, width=30, values=self.ITEMS, state='readonly')
         self.toplevel_combobox_state.current(0)
         self.toplevel_combobox_state.pack(side=RIGHT)
@@ -74,7 +73,6 @@ class Dialog(Frame, object):
         if not server_name:
             self.toplevel_entry_server.config({"background": "Red"})
             return
-        # state = self.toplevel_combobox_state.get()
         state = self.MAPPING[self.toplevel_combobox_state.get()]
         # print(state)
 

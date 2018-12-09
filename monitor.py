@@ -3,9 +3,10 @@ from tkinter import ttk
 from dialog import Dialog
 from tkinter import messagebox
 from sqlapi import DB
-from threading import Thread
-from servers_check import Ping
-import re
+from send_mail import RAMail
+from service_dialog import DialogService
+import re, os
+
 
 class Table(Frame, object):
     def __init__(self, master):
@@ -22,7 +23,8 @@ class Table(Frame, object):
         # Редактируется ли запись (self.edit = True) или создается новая (self.edit = False)
         self.edit = False
         # Ссылка на объект класса DБ, содержащего методы для работы с классами
-        self.sqlapi = DB()
+        self.sqlapi = DB(os.path.join(os.getcwd(), "monitor.db"))
+        self.mail = RAMail()
         # Создание базы данных
         self.sqlapi.init_db()
         # Создание интерфейса главнго окна приложения
@@ -30,7 +32,9 @@ class Table(Frame, object):
         # Добавление списка серверов из БД
         self.add_all_servers()
         # Получение настроек программы из БД
+        self.entry_text_dict = {}
         self.get_settings()
+
 
     def setup_ui(self):
         """
@@ -159,15 +163,15 @@ class Table(Frame, object):
         self.entry_smtp_port = Entry(container_smtp_port, width=10, validate='focusin', validatecommand=self.set_default_style)
         self.entry_smtp_port.pack( side=RIGHT, padx=(0, 180))
 
-        # Контейнер для надписи и combobox для указания - использовать tls или нет
+        # Контейнер для надписи и checkbutton для указания - использовать tls или нет
         container_tls = ttk.Frame(group)
         container_tls.pack(fill='x', side=TOP, pady=5, padx=(10, 10))
-        self.label_tls = Label(container_tls, text='TLS')
+        self.label_tls = Label(container_tls, text='Использовать TLS')
         self.label_tls.pack(side=LEFT,padx=5)
-        self.combobox_tls = ttk.Combobox(container_tls, width=7, values=("Да", "Нет"), state='readonly')
-        self.combobox_tls.current(0)
-        self.combobox_tls.pack(side=RIGHT, padx=(0, 180))
-        # self.toplevel_combobox_state.bind('<<ComboboxSelected>>', self.onSelect)
+        self.tls = IntVar()
+        self.checkbutton_tls = ttk.Checkbutton(container_tls, text = "", variable = self.tls)
+        self.checkbutton_tls.pack(side=RIGHT, padx=(0, 225))
+
         #########################################################################
 
         # Контейнер для кнопок формы настроек
@@ -321,88 +325,81 @@ class Table(Frame, object):
             self.tree.delete(self.tree.selection())
             self.sqlapi.delete_server(select_server)
 
+    def field_fill_check(self):
+        self.fill_dict_of_fields()
+        msg = 'Не все поля заполнены'
+        error = False
+        # Если поле пустое или не является числом
+        if not self.entry_text_dict["interval"].isnumeric():
+            # Сделать фон поля красным
+            self.entry_interval.config({"background": "Red"})
+            # Флаг error установить в значение True
+            error = True
+        # Если поле пустое или не является числом
+        if not self.entry_text_dict["count_of_check"].isnumeric():
+            # Сделать фон поля красным
+            self.entry_numcheck.config({"background": "Red"})
+            # Флаг error установить в значение True
+            error = True
+        # Если поле пустое или не является числом
+        if not self.entry_text_dict["smtp_port"].isnumeric():
+            # Сделать фон поля красным
+            self.entry_smtp_port.config({"background": "Red"})
+            # Флаг error установить в значение True
+            error = True
+        # Если поле пустое
+        if not self.entry_text_dict["password"]:
+            # Сделать фон поля красным
+            self.entry_password.config({"background": "Red"})
+            # Флаг error установить в значение True
+            error = True
+        # Если пароли не совпадают
+        if not self.entry_text_dict["password"] == self.entry_confirm_password.get():
+            self.entry_password.config({"background": "Red"})
+            self.entry_confirm_password.config({"background": "Red"})
+            # self.msg += " \nПароль и подтверждение не совпадают"
+            msg = "Пароль и подтверждение не совпадают"
+            # Флаг error установить в значение True
+            error = True
+        # Если поле пустое
+        if not self.entry_text_dict["smtp_server"]:
+            # Сделать фон поля красным
+            self.entry_smtp_server.config({"background": "Red"})
+            # Флаг error установить в значение True
+            error = True
+        # Если поле не является корректным e-mail адресом
+        if not self.check_email(self.entry_text_dict["email_from"]):
+            # Сделать фон поля красным
+            self.entry_email_from.config({"background": "Red"})
+            # Флаг error установить в значение True
+            error = True
+        # Если поле не является корректным e-mail адресом
+        if not self.check_email(self.entry_text_dict["email_to"]):
+            # Сделать фон поля красным
+            self.entry_email_to.config({"background": "Red"})
+            # Флаг error установить в значение True
+            error = True
+
+        if error:
+            # Если флаг error установлен в True
+            # Установить фокус на кнопку "Сохранить"
+            self.button_save.focus()
+            # Показать сообщение об ошибке
+            self.label_message.pack(side=LEFT, padx=(100, 0))
+            self.label_message.config(text=msg)
+            return error
 
     def save_settings(self):
         """
         Функция save_settings проверяет корректность введенных данных и сохраняет настройки в базе данных
         :return: None
         """
-        # Сообщение, которое выводится при некорректном заполнении полей в форме настроек
-        msg = 'Неверно заполнено поле '
-        # Флаг. Если True, то на форме будет выводиться выодиться сообщение msg
-        error = False
-        # Словарь со значеиями введенных настроек
-        entry_text_dict = {
-                        "interval": self.entry_interval.get(),
-                        "count_of_check": self.entry_numcheck.get(),
-                        "email_from": self.entry_email_from.get(),
-                        "email_to": self.entry_email_to.get(),
-                        "password": self.entry_password.get(),
-                        "smtp_server": self.entry_smtp_server.get(),
-                        "smtp_port": self.entry_smtp_port.get(),
-                        "tls": 1 if self.combobox_tls.get() == "Да" else 0
-        }
 
-        # Если поле пустое или не является числом
-        if not entry_text_dict["interval"].isnumeric():
-            # Сделать фон поля красным
-            self.entry_interval.config({"background": "Red"})
-            # Флаг error установить в значение True
-            error = True
-        # Если поле пустое или не является числом
-        if not entry_text_dict["count_of_check"].isnumeric():
-            # Сделать фон поля красным
-            self.entry_numcheck.config({"background": "Red"})
-            # Флаг error установить в значение True
-            error = True
-        # Если поле пустое или не является числом
-        if not entry_text_dict["smtp_port"].isnumeric():
-            # Сделать фон поля красным
-            self.entry_smtp_port.config({"background": "Red"})
-            # Флаг error установить в значение True
-            error = True
-        # Если поле пустое
-        if not entry_text_dict["password"]:
-            # Сделать фон поля красным
-            self.entry_password.config({"background": "Red"})
-            # Флаг error установить в значение True
-            error = True
-        # Если пароли не совпадают
-        if not entry_text_dict["password"] == self.entry_confirm_password.get():
-            self.entry_password.config({"background": "Red"})
-            self.entry_confirm_password.config({"background": "Red"})
-            msg += " \nПароль и подтверждение не совпадают"
-            # Флаг error установить в значение True
-            error = True
-        # Если поле пустое
-        if not entry_text_dict["smtp_server"]:
-            # Сделать фон поля красным
-            self.entry_smtp_server.config({"background": "Red"})
-            # Флаг error установить в значение True
-            error = True
-        # Если поле не является корректным e-mail адресом
-        if not self.check_email(entry_text_dict["email_from"]):
-            # Сделать фон поля красным
-            self.entry_email_from.config({"background": "Red"})
-            # Флаг error установить в значение True
-            error = True
-        # Если поле не является корректным e-mail адресом
-        if not self.check_email(entry_text_dict["email_to"]):
-            # Сделать фон поля красным
-            self.entry_email_to.config({"background": "Red"})
-            # Флаг error установить в значение True
-            error = True
-
-        # Если флаг error установлен в True
-        if error:
-            # Установить фокус на кнопку "Сохранить"
-            self.button_save.focus()
-            # Показать сообщение об ошибке
-            self.label_message.pack(side=LEFT, padx=(100, 0))
-            self.label_message.config(text=msg)
+        if self.field_fill_check():
             return
         # Сохранить настройки в базе данных
-        self.sqlapi.update_settings(entry_text_dict)
+        self.entry_text_dict["password"] = self.mail.encode_password(self.entry_text_dict["password"])
+        self.sqlapi.update_settings(self.entry_text_dict)
         self.quit()
 
     def get_settings(self):
@@ -410,10 +407,30 @@ class Table(Frame, object):
         Функция get_settings получает настройки из базы данные и отображает их в поях формы
         :return: None
         """
-        interval, count_of_check, email_from = self.sqlapi.get_settings()
+        interval, count_of_check, email_from, email_to, password_hash, smtp_server, smtp_port, start_tls = self.sqlapi.get_settings()
         self.entry_interval.insert(0, str(interval))
         self.entry_numcheck.insert(0, str(count_of_check))
         self.entry_email_from.insert(0, email_from)
+        self.entry_email_to.insert(0, email_to)
+        password = self.mail.decode_password(password_hash)
+        self.entry_password.insert(0, password)
+        self.entry_confirm_password.insert(0, password)
+        self.entry_smtp_server.insert(0, smtp_server)
+        self.entry_smtp_port.insert(0, str(smtp_port))
+        self.tls.set(start_tls)
+
+    def fill_dict_of_fields(self):
+        # Словарь со значеиями введенных настроек
+        self.entry_text_dict = {
+                        "interval": self.entry_interval.get(),
+                        "count_of_check": self.entry_numcheck.get(),
+                        "email_from": self.entry_email_from.get(),
+                        "email_to": self.entry_email_to.get(),
+                        "password": self.entry_password.get(),
+                        "smtp_server": self.entry_smtp_server.get(),
+                        "smtp_port": self.entry_smtp_port.get(),
+                        "tls": self.tls.get()
+        }
 
     def set_default_style(self):
         """
@@ -428,6 +445,7 @@ class Table(Frame, object):
         self.entry_confirm_password.configure(bg="White")
         self.entry_smtp_server.configure(bg="White")
         self.entry_smtp_port.configure(bg="White")
+        self.label_message.pack_forget()
 
         # Метод проверки должен вернуть True, чтобы разрешить изменение (т.е. проверка будет выпоняться каждый раз при наступлении события,
         # False, чтобы отклонить его ( т.е. проверка не будет выполняться)
@@ -451,14 +469,21 @@ class Table(Frame, object):
         Функция open_service_settings открывает окно с настройками службы Windows
         :return: None
         """
-        # DialogService()
-        th = Ping("ping")
-        th1 = Thread(target=th.run)
-        th1.start()
+
+        if self.field_fill_check():
+            return
+
+        DialogService()
+        # with open('C:\\servermonitor\\ServerMonitor.log', 'a') as f:
+        #     th = Ping()
+        #     th1 = Thread(target=th.run)
+        #     th1.start()
         # subprocess.call("servers_check.exe")
+
 
 if __name__ == '__main__':
     root = Tk()
+    # root.config(bg='green')
     root.resizable(width=FALSE, height=FALSE)
     table = Table(root)
     root.mainloop()

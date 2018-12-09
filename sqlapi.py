@@ -1,7 +1,7 @@
 """ Модуль содержит класс для работы с базой данных """
 import sqlite3
-import os
 from tkinter import messagebox
+import configparser
 
 
 class DB():
@@ -9,18 +9,20 @@ class DB():
     Класс DB содержит содержит набор функций для создани БД SQLite и для работы с ней.
     Также содержит словарь для заполнения БД данными по-умолчанию.
     """
-    def __init__(self):
+    def __init__(self, db_file):
         """
         Конструктор инициализирует словарь для сохранения в БД значений по-умолчанию
         """
-        self.db_file = os.path.join(os.getcwd(), "monitor.db")
+        # self.db_file = os.path.join(os.getcwd(), "monitor.db")
+        # self.db_file = "C:\\servermonitor\\monitor.db"
+        self.db_file = db_file
+        print(self.db_file)
 
         # Настройки по-умолчанию общие
         self.settings = {
             "id_setting": 1,
             "interval": 60,
-            "count_of_check": 10,
-            "email_from": ""
+            "count_of_check": 10
         }
 
     def init_db(self):
@@ -64,7 +66,7 @@ class DB():
                 count_of_check INTEGER default 10,
                 email_from  TEXT default "",
                 email_to  TEXT default "",
-                password_hash TEXT default "",
+                password_hash BLOB,
                 smtp_server TEXT default "",
                 smtp_port INTEGER default 25,
                 start_tls INTEGER default 0
@@ -107,28 +109,12 @@ class DB():
         connection = self.create_connection()
         cursor = connection.cursor()
         try:
-            sql_settings = """INSERT INTO setting (id_setting, interval, count_of_check, email_from) 
-                        VALUES (:id_setting, :interval, :count_of_check, :email_from)"""
+            sql_settings = """INSERT INTO setting (id_setting, interval, count_of_check) 
+                        VALUES (:id_setting, :interval, :count_of_check)"""
             cursor.execute(sql_settings, self.settings)
             connection.commit()
         except sqlite3.DatabaseError as error:
             return self.show_db_error(error)
-
-    # def reset_to_default_settings(self):
-    #     """
-    #     Функция reset_to_default_settings() возвращает записи в таблицах к значениям по-умолчанию
-    #     """
-    #     connection = self.create_connection()
-    #     cursor = connection.cursor()
-    #     try:
-    #         sql_settings = """UPDATE setting SET interval=:interval, count_of_check=:count_of_check, email=:email                
-    #                     WHERE id_setting=:id_setting"""
-    #         sql_server_list= """DELETE FROM servers"""
-    #         cursor.execute(sql_settings, self.settings)
-    #         cursor.execute(sql_server_list, self.font)
-    #         connection.commit()
-    #     except sqlite3.DatabaseError as error:
-    #         return self.show_db_error(error)
 
     # Получить парамнтры из базы данных
     def get_settings(self):
@@ -139,7 +125,8 @@ class DB():
         try:
             con = self.create_connection()
             cursor = con.cursor()
-            sql_settings = "SELECT interval, count_of_check, email_from FROM setting"
+            sql_settings = """ SELECT interval, count_of_check, email_from,  email_to, password_hash, smtp_server,
+                           smtp_port, start_tls FROM setting"""
             cursor.execute(sql_settings)
             return cursor.fetchone()
         except sqlite3.DatabaseError as error:
