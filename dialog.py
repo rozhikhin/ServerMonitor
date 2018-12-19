@@ -5,7 +5,7 @@ from tkinter import ttk
 class Dialog(Frame, object):
     def __init__(self, master, server="", state="", title="Добавить запись"):
         """
-        Функция __init__ инициализирует создание экземпляра класса Dialog и создает пользовательский интерфейс
+        Метод __init__ инициализирует создание экземпляра класса Dialog и создает пользовательский интерфейс
         :param master: Table
         :param server: str
         :param state: str
@@ -64,7 +64,7 @@ class Dialog(Frame, object):
 
     def get_text(self):
         """
-        Функция get_text получает данные из полей формы и сохраняет данные
+        Метод get_text получает данные из полей формы и сохраняет данные
         :return: None
         """
         # Получаем имя сервера и приводим его к верхнему регистру
@@ -74,7 +74,6 @@ class Dialog(Frame, object):
             self.toplevel_entry_server.config({"background": "Red"})
             return
         state = self.MAPPING[self.toplevel_combobox_state.get()]
-        # print(state)
 
         # Вызываем функцию главного модуля и сохраняем данные
         self.master.save_server({"server_name": server_name, "state": state})
@@ -82,7 +81,7 @@ class Dialog(Frame, object):
 
     def set_default_style(self):
         """
-        Функция set_default_style возвращает виджету фон по умолчанию (если он получил фокус)
+        Метод set_default_style возвращает виджету фон по умолчанию (если он получил фокус)
         :return: bool
         """
         self.toplevel_entry_server.configure(bg="White")
@@ -93,7 +92,7 @@ class Dialog(Frame, object):
 
     def close_toplevel(self):
         """
-        Функция close_toplevel закрывает окно
+        Метод close_toplevel закрывает окно
         :return: None
         """
         self.toplevel_dialog.destroy()

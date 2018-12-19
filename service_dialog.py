@@ -1,13 +1,18 @@
+"""
+Модуль содердит класс DialogService
+"""
 from tkinter import *
 from tkinter import ttk
 import subprocess, ctypes, psutil, time, os
 
 
 class DialogService (Frame, object):
-    # def __init__(self, master):
+    """
+    Класс DialogService содержит методы для работы со службой приложения
+    """
     def __init__(self):
         """
-        Функция __init__ инициализирует создание экземпляра класса DialogService и создает пользовательский интерфейс
+        Метод __init__ инициализирует создание экземпляра класса DialogService и создает пользовательский интерфейс
         :param master: Table
         """
         Frame.__init__(self)
@@ -16,7 +21,6 @@ class DialogService (Frame, object):
         self.toplevel_dialog = Toplevel()
         self.toplevel_dialog.minsize(300, 100)
         self.toplevel_dialog.protocol("WM_DELETE_WINDOW", self.close_toplevel)
-        # self.toplevel_dialog.transient(master)
         # Установка заголовка окна (зависит от того, редактируется запись или создается новая
         self.toplevel_dialog.title("Настройки службы")
         # Сделать окно модальным
@@ -41,6 +45,10 @@ class DialogService (Frame, object):
         self.check_state_service()
 
     def check_state_service(self):
+        """
+        Метод check_state включает и отключает кнопки в зависимости от состояния службы
+        :return: None
+        """
         try:
             service = psutil.win_service_get('server_monitor')
             if service and service.status() == 'running':
@@ -70,24 +78,35 @@ class DialogService (Frame, object):
         self.toplevel_dialog.destroy()
 
     def is_admin(self):
+        """
+        Метод is_admin проверяет - является ли пользователь администратором
+        :return: boolean
+        """
         try:
             return ctypes.windll.shell32.IsUserAnAdmin()
         except:
             return False
 
     def create_or_delete_reg_key(self):
+        """
+        Метод create_or_delete_reg_key создает или удаляет записи в реестре в зависимости от состояния службы
+        :return:
+        """
         with open(os.path.join(os.getcwd(), "monitor.log"), 'a') as f:
             try:
                 if self.is_admin():
-                    # subprocess.run(sys.executable + ' ' + os.path.join(os.getcwd(), "reg.py"))
                     subprocess.run('python.exe' + ' ' + os.path.join(os.getcwd(), "reg.py"))
                 else:
-                    # ctypes.windll.shell32.ShellExecuteW(None, 'runas', sys.executable, os.path.join(os.getcwd(), "reg.py"), None, 1)
                     ctypes.windll.shell32.ShellExecuteW(None, 'runas', 'python.exe', os.path.join(os.getcwd(), "reg.py"), None, 1)
             except Exception as err:
                 f.write(str(err))
 
     def do_action(self, action):
+        """
+        Метод do_action запускает исполняемый файл службы приложения с переданным в параметре аргументом
+        :param action: str
+        :return: None
+        """
         with open(os.path.join(os.getcwd(), "monitor.log"), 'a') as f:
             try:
                 if self.is_admin():
@@ -101,19 +120,35 @@ class DialogService (Frame, object):
                 f.write(str(err))
 
     def install_service(self):
+        """
+        Метод install_service устанавливает службу
+        :return: None
+        """
         self.create_or_delete_reg_key()
         self.do_action('install')
         self.check_state_service()
 
     def start_service(self):
+        """
+        Метод start_service запускает службу
+        :return: None
+        """
         self.do_action('start')
         self.check_state_service()
 
     def stop_service(self):
+        """
+        Метод stop_service останавливает службу
+        :return: None
+        """
         self.do_action('stop')
         self.check_state_service()
 
     def remove_service(self):
+        """
+        Метод remove_service удаляет службу
+        :return: None
+        """
         self.create_or_delete_reg_key()
         self.do_action('remove')
         self.check_state_service()

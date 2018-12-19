@@ -11,7 +11,7 @@ import re, os
 class Table(Frame, object):
     def __init__(self, master):
         """
-        Функция __init__ инициализирует необхожимые переменные класса и содержит конструкто класса
+        Метод __init__ инициализирует необхожимые переменные класса и содержит конструкто класса
         :param master: ссылка на родительский элемент
         """
         Frame.__init__(self)
@@ -38,7 +38,7 @@ class Table(Frame, object):
 
     def setup_ui(self):
         """
-        Функция setup_ui создает пользовательский интерфейс главного окна приложения
+        Метод setup_ui создает пользовательский интерфейс главного окна приложения
         :return: None
         """
 
@@ -189,7 +189,7 @@ class Table(Frame, object):
 
     def select(self, event=None):
         """
-        Функция select при выделении элемента в Treeview возвращает словарь с данными выделенного элемента
+        Метод select при выделении элемента в Treeview возвращает словарь с данными выделенного элемента
         :param event: None
         :return: dict
         """
@@ -203,7 +203,7 @@ class Table(Frame, object):
 
     def convert_state_from_int_to_str(self, values):
         """
-        Функция convert_state_from_int_to_str заменяет числовые значения на буквенные для пончтного отображние в форме
+        Метод convert_state_from_int_to_str заменяет числовые значения на буквенные для пончтного отображние в форме
         :param values: tuple
         :return: list
         """
@@ -216,7 +216,7 @@ class Table(Frame, object):
 
     def add_all_servers(self):
         """
-        Функция add_all_servers получает из базы данных список с данными серверов, сортирует его и добавляет в Treeview
+        Метод add_all_servers получает из базы данных список с данными серверов, сортирует его и добавляет в Treeview
         :return: None
         """
         servers = self.sqlapi.get_servers_name_and_state()
@@ -228,7 +228,7 @@ class Table(Frame, object):
 
     def create_top_for_add_server(self):
         """
-        Функция create_top_for_add_server создает и показыыает окно для добавления сервера
+        Метод create_top_for_add_server создает и показыыает окно для добавления сервера
         :return: None
         """
         self.edit = False
@@ -236,7 +236,7 @@ class Table(Frame, object):
 
     def create_top_for_edit_server(self):
         """
-        Функция create_top_for_add_server создает и показыыает окно для редактирования сервера
+        Метод create_top_for_add_server создает и показыыает окно для редактирования сервера
         :return: None
         """
         # Устанавливает флаг edit, означающий что диалоговое окно открывается для редактирования
@@ -248,7 +248,7 @@ class Table(Frame, object):
 
     def add_server(self, server_data):
         """
-        Функция add_server принимает словарь из имени сервера и состояния.
+        Метод add_server принимает словарь из имени сервера и состояния.
         Сохраняет новую запись в базе и добавляет ее в список серверов в приложении и сортирует его
         :param server_data: dict
         :return: None
@@ -259,7 +259,7 @@ class Table(Frame, object):
 
     def edit_server(self, server_data):
         """
-        Функция edit_server принимает словарь из имени сервера и состояния.
+        Метод edit_server принимает словарь из имени сервера и состояния.
         Сохраняет измененную запись в базе и добавляет ее в список серверов в приложении и сортирует его
         :param server_data: dict
         :return: None
@@ -273,7 +273,7 @@ class Table(Frame, object):
 
     def sort_serevrs_list(self, server_data):
         """
-        Функция sort_servers_list сортирует список сервероа в Treeview после добавления или редактирования сервера
+        Метод sort_servers_list сортирует список сервероа в Treeview после добавления или редактирования сервера
         :param server_data: dict
         :return: None
         """
@@ -306,7 +306,7 @@ class Table(Frame, object):
 
     def save_server(self, server_data):
         """
-        Функция save_server сохраняет данные после добавления или редактирования сервера
+        Метод save_server сохраняет данные после добавления или редактирования сервера
         :param server_data: dict
         :return: None
         """
@@ -317,7 +317,7 @@ class Table(Frame, object):
 
     def remove_server(self):
         """
-        Функция remove_server удаляет сервер
+        Метод remove_server удаляет сервер
         :return: None
         """
         select_server = self.select()
@@ -326,6 +326,10 @@ class Table(Frame, object):
             self.sqlapi.delete_server(select_server)
 
     def field_fill_check(self):
+        """
+        Метод field_fill_check проверяет правильность заполнения полей формы настроек
+        :return:  error: boolean
+        """
         self.fill_dict_of_fields()
         msg = 'Не все поля заполнены'
         error = False
@@ -391,10 +395,9 @@ class Table(Frame, object):
 
     def save_settings(self):
         """
-        Функция save_settings проверяет корректность введенных данных и сохраняет настройки в базе данных
+        Метод save_settings проверяет корректность введенных данных и сохраняет настройки в базе данных
         :return: None
         """
-
         if self.field_fill_check():
             return
         # Сохранить настройки в базе данных
@@ -404,7 +407,7 @@ class Table(Frame, object):
 
     def get_settings(self):
         """
-        Функция get_settings получает настройки из базы данные и отображает их в поях формы
+        Метод get_settings получает настройки из базы данные и отображает их в полях формы
         :return: None
         """
         interval, count_of_check, email_from, email_to, password_hash, smtp_server, smtp_port, start_tls = self.sqlapi.get_settings()
@@ -420,6 +423,10 @@ class Table(Frame, object):
         self.tls.set(start_tls)
 
     def fill_dict_of_fields(self):
+        """
+        Метод fill_dict_of_fields заполняет словарь entry_text_dict данными из полей формы
+        :return: None
+        """
         # Словарь со значеиями введенных настроек
         self.entry_text_dict = {
                         "interval": self.entry_interval.get(),
@@ -434,7 +441,7 @@ class Table(Frame, object):
 
     def set_default_style(self):
         """
-        Функция set_default_style возвращает виджетам фон по умолчанию
+        Метод set_default_style возвращает виджетам фон по умолчанию
         :return: Bool
         """
         self.entry_interval.configure(bg="White")
@@ -454,7 +461,7 @@ class Table(Frame, object):
 
     def check_email(self, email_from):
         """
-        Функция check_email проверяет корректность введенного e-mail
+        Метод check_email проверяет корректность введенного e-mail
         :param email: str
         :return: Bool
         """
@@ -466,24 +473,15 @@ class Table(Frame, object):
 
     def open_service_settings(self):
         """
-        Функция open_service_settings открывает окно с настройками службы Windows
+        Метод open_service_settings открывает окно с настройками службы Windows
         :return: None
         """
-
         if self.field_fill_check():
             return
-
         DialogService()
-        # with open('C:\\servermonitor\\ServerMonitor.log', 'a') as f:
-        #     th = Ping()
-        #     th1 = Thread(target=th.run)
-        #     th1.start()
-        # subprocess.call("servers_check.exe")
-
 
 if __name__ == '__main__':
     root = Tk()
-    # root.config(bg='green')
     root.resizable(width=FALSE, height=FALSE)
     table = Table(root)
     root.mainloop()

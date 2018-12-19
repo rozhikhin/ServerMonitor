@@ -1,3 +1,4 @@
+"Модуль содержит класс для создания службы Windows"
 import servicemanager
 import socket
 import sys
@@ -9,6 +10,7 @@ from servers_check import Ping
 
 
 class ServerMonitorService(win32serviceutil.ServiceFramework):
+    "Модуль содержит класс для создания службы Windows"
     _svc_name_ = "server_monitor"
     _svc_display_name_ = "Server monitor service"
 
@@ -16,6 +18,7 @@ class ServerMonitorService(win32serviceutil.ServiceFramework):
         win32serviceutil.ServiceFramework.__init__(self, args)
         self.hWaitStop = win32event.CreateEvent(None, 0, 0, None)
         socket.setdefaulttimeout(60)
+        # Запуск целевого метода
         self.ping = Ping()
 
     def SvcStop(self):

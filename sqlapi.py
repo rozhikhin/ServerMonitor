@@ -1,10 +1,9 @@
 """ Модуль содержит класс для работы с базой данных """
 import sqlite3
 from tkinter import messagebox
-import configparser
 
 
-class DB():
+class DB:
     """
     Класс DB содержит содержит набор функций для создани БД SQLite и для работы с ней.
     Также содержит словарь для заполнения БД данными по-умолчанию.
@@ -13,8 +12,6 @@ class DB():
         """
         Конструктор инициализирует словарь для сохранения в БД значений по-умолчанию
         """
-        # self.db_file = os.path.join(os.getcwd(), "monitor.db")
-        # self.db_file = "C:\\servermonitor\\monitor.db"
         self.db_file = db_file
         print(self.db_file)
 
@@ -27,7 +24,7 @@ class DB():
 
     def init_db(self):
         """
-        Функция init_db() создает базу данных и заполняет ее значениями по-умолчанию.
+        Метод init_db() создает базу данных и заполняет ее значениями по-умолчанию.
         Для этого она использует следующие функции класса DB:
             - create_db() - создает базу в случае ее отсутствия
             - self.check_default_settings() -  проверяет, есть ли в таблице setting запись с ID=1
@@ -41,7 +38,7 @@ class DB():
 
     def create_connection(self):
         """
-        Функция create_connection() создает базу данных и возращает объект подключения к БД.
+        Метод create_connection() создает базу данных и возращает объект подключения к БД.
         """
 
         try:
@@ -55,7 +52,7 @@ class DB():
 
     def create_db(self):
         """
-        Функция create_db() создает таблицы базы данных
+        Метод create_db() создает таблицы базы данных
         """
         connection = self.create_connection()
         cursor = connection.cursor()
@@ -88,7 +85,7 @@ class DB():
 
     def check_default_settings(self):
         """
-        Функция check_default_settings() делает запрос к базе данных и проверяет, есть ли в таблице setting
+        Метод check_default_settings() делает запрос к базе данных и проверяет, есть ли в таблице setting
         запись с ID=1
         """
         connection = self.create_connection()
@@ -103,7 +100,7 @@ class DB():
 
     def set_default_settings(self):
         """
-        Функция set_default_settings() заполняет таблицы значениями по-умолчанию при инициализации приложения
+        Метод set_default_settings() заполняет таблицы значениями по-умолчанию при инициализации приложения
         и при сбросе настроек
         """
         connection = self.create_connection()
@@ -119,8 +116,8 @@ class DB():
     # Получить парамнтры из базы данных
     def get_settings(self):
         """
-        Функция get_settings() делает выборку из таблицы setting
-        :return:  кортеж - выборка из бд
+        Метод get_settings() делает выборку из таблицы setting
+        :return:  tuple
         """
         try:
             con = self.create_connection()
@@ -135,8 +132,8 @@ class DB():
     # Получить список серверов из базы данных
     def get_servers(self):
         """
-        Функция get_servers() делает выборку севреров из таблицы servers
-        :return:  List - выборка из бд
+        Метод get_servers() делает выборку севреров из таблицы servers
+        :return:  list
         """
         con = self.create_connection()
         cursor = con.cursor()
@@ -150,8 +147,8 @@ class DB():
     # Получить список серверов из базы данных
     def get_servers_name_and_state(self):
         """
-        Функция get_servers() делает выборку севреров из таблицы servers
-        :return:  List - выборка из бд
+        Метод get_servers_name_and_state() делает выборку севреров из таблицы servers
+        :return:  list
         """
         con = self.create_connection()
         cursor = con.cursor()
@@ -162,11 +159,9 @@ class DB():
         except sqlite3.DatabaseError as error:
             return self.show_db_error(error)
 
-
-
     def update_error_count(self, data):
         """
-        Функция update_error_count(error_count) обновляет счетчик ошибок в БД
+        Метод update_error_count(error_count) обновляет счетчик ошибок в БД
         :param data:
         :return: None
         """
@@ -181,7 +176,7 @@ class DB():
 
     def update_state(self, data):
         """
-        Функция update_state() устанавливает ( state == ERROR ) или снимает ( state == OK ) состояние сервера в БД
+        Метод update_state() меняет состояние сервера в БД
         :param data:
         :return: None
         """
@@ -196,8 +191,8 @@ class DB():
 
     def update_settings(self, changed_settings):
         """
-        Функция update_settings(changed_settings) обновляет данные в БД
-        :param changed_settings:
+        Метод update_settings(changed_settings) обновляет данные в БД
+        :param changed_settings: dict
         :return: None
         """
         connection = self.create_connection()
@@ -214,7 +209,7 @@ class DB():
             
     def save_server(self, server_data):
         """
-        Функция save_server сохраняет новую запись сервера в базе данных
+        Метод save_server сохраняет новую запись сервера в базе данных
         :param server_data: dict
         :return: bool
         """
@@ -231,7 +226,7 @@ class DB():
 
     def update_server(self, server_data):
         """
-        Функция update_server сохраняет отредактированную запись сервера в базе данных
+        Метод update_server сохраняет отредактированную запись сервера в базе данных
         :param server_data: dict
         :return: bool
         """
@@ -248,7 +243,7 @@ class DB():
         
     def delete_server(self, server_data):
         """
-        Функция delete_server сохраняет отредактированную запись сервера в базе данных
+        Метод delete_server сохраняет отредактированную запись сервера в базе данных
         :param server_data: dict
         :return: None
         """
@@ -263,7 +258,7 @@ class DB():
 
     def show_db_error(self, error):
         """
-        Функция show_db_error(error) выводит окно с сообщением об ошибке при работе с базой данных
+        Метод show_db_error(error) выводит окно с сообщением об ошибке при работе с базой данных
         :param error:
         :return: None
         """
