@@ -10,7 +10,7 @@ from servers_check import Ping
 
 
 class ServerMonitorService(win32serviceutil.ServiceFramework):
-    "Модуль содержит класс для создания службы Windows"
+    "Класс содержит методы для создания службы Windows и управления ею"
     _svc_name_ = "server_monitor"
     _svc_display_name_ = "Server monitor service"
 
